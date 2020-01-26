@@ -1,0 +1,25 @@
+doctype html
+html
+  include /../../static/assets/lib/ldui/pug/ldui.pug
+  head
+    +css("https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css")
+    +css("/assets/lib/ldui/ldui.min.css")
+  body: .p-4
+    .text-center
+      .btn.btn-outline-dark.btn-upload.mb-4
+        span Upload
+        input.form-control(ld="file",type="file")
+      .card: .card-body: div(ld="output")
+    +script("/assets/lib/ldui/ldui.min.js")
+    +script("/assets/lib/image-type/image-type.min.js")
+    script: :lsc
+      lc = {}
+      view = new ldView do
+        root: document.body
+        action: input: do
+          file: ({node}) ->
+            imgtype(node.files.0).then ->
+              lc.output = JSON.stringify(it)
+              view.render!
+        handler: do
+          output: ({node}) -> node.innerText = lc.output or ''
