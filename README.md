@@ -1,4 +1,4 @@
-# image-type
+# imgtype
 
 Image type Hint.
 
