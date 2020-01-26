@@ -3,6 +3,12 @@
 Image type Hint.
 
 
+## Usage
+
+require! <[imgtype]> # only if use in nodejs
+imgtype(obj).then ({ext, mime}) -> ... # ext = null if can't figure it out
+
+
 ## Approach
 
 Image file type can be detected throught the first two bytes of the file:

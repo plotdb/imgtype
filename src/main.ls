@@ -26,7 +26,7 @@
       else if Buffer? and (d instanceof Buffer) => typemap.byte[d.0 * 0x100 + d.1]
       else if d and d.length => typemap.byte[d.0 * 0x100 + d.1]
       else null
-      res if ret => {ext: ret, mime: typemap.mime[ret]} else null
+      res if ret => {ext: ret, mime: typemap.mime[ret]} else {ext: null}
 
   if module? => module.exports = imgtype
   if window? => window.imgtype = imgtype

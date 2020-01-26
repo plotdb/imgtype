@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 mkdir -p dist
-echo "build src/main.ls -> dist/image-type.js ..."
-./node_modules/.bin/lsc -cbp src/main.ls > dist/image-type.js
-echo "minifying image-type.js ..."
-./node_modules/.bin/uglifyjs dist/image-type.js > dist/image-type.min.js
+echo "build src/main.ls -> dist/imgtype.js ..."
+./node_modules/.bin/lsc -cbp src/main.ls > dist/imgtype.js
+echo "minifying imgtype.js ..."
+./node_modules/.bin/uglifyjs dist/imgtype.js > dist/imgtype.min.js
 echo "deploy into local web ..."
-mkdir -p web/static/assets/lib/image-type/
-cp -R dist/* web/static/assets/lib/image-type/
+mkdir -p web/static/assets/lib/imgtype/
+cp -R dist/* web/static/assets/lib/imgtype/
 echo "done."
 
