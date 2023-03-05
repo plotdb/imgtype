@@ -5,6 +5,9 @@
   "description": "detect image file type",
   "version": "0.0.1",
   "main": "dist/index.min.js",
+  "files": [
+    "dist/**/*"
+  ],
   "homepage": "https://github.com/plotdb/imgtype",
   "repository": {
     "type": "git",
