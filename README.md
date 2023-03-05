@@ -9,6 +9,25 @@ require! <[imgtype]> # only if use in nodejs
 imgtype(obj).then ({ext, mime}) -> ... # ext = null if can't figure it out
 
 
+## Mime mappaing
+
+You can use `imgtype.mime["..."]` to get the mime type for a specific file extension, such as:
+
+    imgtype.mime.svg
+    imgtype.mime.jpg
+
+
+Supported extensions include:
+
+ - `bmp`: `image/bmp`
+ - `gif`: `image/gif`
+ - `png`: `image/png`
+ - `svg`: `image/svg+xml`
+ - `tif`: `image/tiff`
+ - `jpg`: `image/jpeg`
+
+
+
 ## Approach
 
 Image file type can be detected throught the first two bytes of the file:

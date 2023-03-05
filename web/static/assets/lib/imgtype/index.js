@@ -61,6 +61,7 @@
       }
     });
   };
+  imgtype.mime = typemap.mime;
   if (typeof window != 'undefined' && window !== null) {
     return window.imgtype = imgtype;
   } else if (typeof module != 'undefined' && module !== null) {

@@ -27,5 +27,7 @@ imgtype = (d) -> new Promise (res, rej) ->
     else null
     res if ret => {ext: ret, mime: typemap.mime[ret]} else {ext: null}
 
+imgtype.mime = typemap.mime
+
 if window? => window.imgtype = imgtype
 else if module? => module.exports = imgtype
