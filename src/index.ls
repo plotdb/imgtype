@@ -1,4 +1,3 @@
-<-(->it!) _
 typemap = do
   mime: do
     bmp: \image/bmp
@@ -18,7 +17,14 @@ typemap = do
     15423: \svg, 15475: \svg, 8252: \svg, 8224: \svg
 
 imgtype = (d) -> new Promise (res, rej) ->
-  if File? and (d instanceof File) =>
+  if typeof(d) == \string and process?env =>
+    fs = require("fs")
+    fd = fs.open-sync d, \r
+    tempBuf = Buffer.alloc(1048576)
+    bytesRead = fs.readSync(fd, tempBuf, 0, 1048576, 0)
+    fs.closeSync(fd)
+    res imgtype(new Uint8Array(tempBuf.buffer, 0, bytesRead))
+  else if File? and (d instanceof File) =>
     d.arrayBuffer!then (ab) -> res imgtype(new Uint8Array(ab))
   else =>
     ret = if typeof(d) == \string => typemap.base64[d.substring(0,2)]
