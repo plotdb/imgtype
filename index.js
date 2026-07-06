@@ -80,10 +80,59 @@ const getColorMode = async (input) => {
     if (typeof process !== 'undefined' && process.env) {
       const fs = require('fs');
       const fd = fs.openSync(input, 'r');
-      const tempBuf = Buffer.alloc(1048576); // 增加到 1MB
-      const bytesRead = fs.readSync(fd, tempBuf, 0, 1048576, 0);
-      fs.closeSync(fd);
-      uint8 = new Uint8Array(tempBuf.buffer, 0, bytesRead);
+      try {
+        const fileSize = fs.fstatSync(fd).size;
+        const buf = Buffer.alloc(26);
+        fs.readSync(fd, buf, 0, 26, 0);
+
+        // PNG: 固定結構，前 26 bytes 足夠
+        if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47) {
+          const colorType = buf[25];
+          return (colorType === 0 || colorType === 4) ? 'grayscale' : 'rgb';
+        }
+
+        // 非 JPEG
+        if (buf[0] !== 0xFF || buf[1] !== 0xD8) return 'unknown';
+
+        // JPEG: 逐 marker seek，跳過大型 ICC profile 等 APP 區段，避免 1MB 限制
+        let offset = 2;
+        let isAdobeCMYK = false;
+
+        while (offset < fileSize - 4) {
+          const bytesRead = fs.readSync(fd, buf, 0, 4, offset);
+          if (bytesRead < 4) break;
+
+          const marker = (buf[0] << 8) | buf[1];
+
+          if ((marker & 0xFF00) !== 0xFF00) { offset++; continue; }
+          if (marker === 0xFF01 || (marker >= 0xFFD0 && marker <= 0xFFD7) || marker === 0xFFD8) {
+            offset += 2; continue;
+          }
+
+          const length = (buf[2] << 8) | buf[3];
+
+          if (marker === 0xFFEE && length >= 12) {
+            fs.readSync(fd, buf, 0, 16, offset);
+            const transform = buf[15];
+            if (transform === 2 || transform === 0) isAdobeCMYK = true;
+          }
+
+          if (marker >= 0xFFC0 && marker <= 0xFFCF && ![0xFFC4, 0xFFC8, 0xFFCC].includes(marker)) {
+            fs.readSync(fd, buf, 0, 10, offset);
+            const components = buf[9];
+            if (components === 4) return 'cmyk';
+            if (components === 3) return isAdobeCMYK ? 'cmyk' : 'rgb';
+            if (components === 1) return 'grayscale';
+            break;
+          }
+
+          offset += 2 + length;
+        }
+
+        return 'unknown';
+      } finally {
+        fs.closeSync(fd);
+      }
     } else {
       throw new Error("Browser environment does not support file paths.");
     }
