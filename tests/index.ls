@@ -1,10 +1,16 @@
 require! <[fs path]>
 imgtype = require "../dist/index"
 
-files = fs
-  .readdir-sync path.join(__dirname, "samples")
+traverse = (root) ->
+  ret = []
+  files = fs.readdir-sync root .map -> path.join(root, it)
+  for file in files =>
+    if fs.lstat-sync(file).is-directory! => ret ++= traverse(file)
+    else ret.push file
+  return ret
+
+files = traverse(path.join(__dirname, "samples"))
   .filter (f) -> /\.jpg|svg|png|tif|gif/.exec(f)
-  .map (f) -> path.join(__dirname, "samples", f)
 
 console.log "#{files.length} file(s) found under #{path.join(__dirname, "samples")}. checking..."
 
