@@ -137,8 +137,53 @@ const getColorMode = async (input) => {
       throw new Error("Browser environment does not support file paths.");
     }
   } else if (typeof Blob !== 'undefined' && input instanceof Blob) {
-    const arrayBuffer = await input.slice(0, 1048576).arrayBuffer();
-    uint8 = new Uint8Array(arrayBuffer);
+    const blobSize = input.size;
+    const read = async (start, len) => new Uint8Array(await input.slice(start, start + len).arrayBuffer());
+
+    const header = await read(0, 26);
+
+    // PNG
+    if (header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4E && header[3] === 0x47) {
+      const colorType = header[25];
+      return (colorType === 0 || colorType === 4) ? 'grayscale' : 'rgb';
+    }
+
+    // 非 JPEG
+    if (header[0] !== 0xFF || header[1] !== 0xD8) return 'unknown';
+
+    // JPEG: 逐 marker seek，跳過大型 ICC profile 等 APP 區段
+    let offset = 2;
+    let isAdobeCMYK = false;
+
+    while (offset < blobSize - 4) {
+      const b = await read(offset, 4);
+      const marker = (b[0] << 8) | b[1];
+
+      if ((marker & 0xFF00) !== 0xFF00) { offset++; continue; }
+      if (marker === 0xFF01 || (marker >= 0xFFD0 && marker <= 0xFFD7) || marker === 0xFFD8) {
+        offset += 2; continue;
+      }
+
+      const length = (b[2] << 8) | b[3];
+
+      if (marker === 0xFFEE && length >= 12) {
+        const a = await read(offset, 16);
+        if (a[15] === 2 || a[15] === 0) isAdobeCMYK = true;
+      }
+
+      if (marker >= 0xFFC0 && marker <= 0xFFCF && ![0xFFC4, 0xFFC8, 0xFFCC].includes(marker)) {
+        const s = await read(offset, 10);
+        const components = s[9];
+        if (components === 4) return 'cmyk';
+        if (components === 3) return isAdobeCMYK ? 'cmyk' : 'rgb';
+        if (components === 1) return 'grayscale';
+        break;
+      }
+
+      offset += 2 + length;
+    }
+
+    return 'unknown';
   } else {
     // 處理 Node.js Buffer 或 Uint8Array
     uint8 = new Uint8Array(input);
